@@ -148,7 +148,7 @@ FROM `Bookings`
 JOIN `Members` ON `Bookings`.`memid` = `Members`.`memid` 
 JOIN `Facilities` ON `Bookings`.`facid` = `Facilities`.`facid` 
 WHERE `Bookings`.`starttime` between '2012-09-14' and '2012-09-14 23:59:59'
-
+HAVING cost >30
 ORDER BY cost DESC
 
 LIMIT 0 , 30
@@ -157,8 +157,40 @@ LIMIT 0 , 30
 
 /* Q9: This time, produce the same result as in Q8, but using a subquery. */
 
+SELECT CONCAT(  `Members`.`surname` ,  ',',  `Members`.`firstname` ) ,  `Facilities`.`name` , 
+CASE WHEN t1.`memid` >0
+THEN t1.`slots` *  `Facilities`.`membercost` 
+ELSE t1.`slots` *  `Facilities`.`guestcost` 
+END AS cost
+FROM (
+
+SELECT * 
+FROM  `Bookings` 
+WHERE  `starttime` 
+BETWEEN  '2012-09-14 00:00:00'
+AND  '2012-09-14 23:59:59'
+)t1
+JOIN  `Members` ON t1.`memid` =  `Members`.`memid` 
+JOIN  `Facilities` ON t1.`facid` =  `Facilities`.`facid` 
+HAVING cost >30
+ORDER BY cost DESC 
+LIMIT 0 , 30
+
 
 
 /* Q10: Produce a list of facilities with a total revenue less than 1000.
 The output of facility name and total revenue, sorted by revenue. Remember
 that there's a different cost for guests and members! */
+
+SELECT  `Facilities`.`name` , SUM( 
+CASE WHEN  `Bookings`.`memid` >0
+THEN  `Bookings`.`slots` *  `Facilities`.`membercost` 
+ELSE  `Bookings`.`slots` *  `Facilities`.`guestcost` 
+END ) AS revenue
+FROM  `Bookings` 
+JOIN  `Members` ON  `Bookings`.`memid` =  `Members`.`memid` 
+JOIN  `Facilities` ON  `Bookings`.`facid` =  `Facilities`.`facid` 
+GROUP BY  `Facilities`.`name` 
+HAVING revenue <1000
+ORDER BY revenue DESC 
+LIMIT 0 , 30
